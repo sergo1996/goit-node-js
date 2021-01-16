@@ -1,40 +1,38 @@
 //Validation package
-const Joi = require('joi');
+const Joi = require("joi");
 
 //The middleware validate contact credential (create)
 function validateCreateContact(req, res, next) {
-	const createContactRules = Joi.object({
-		name: Joi.string().min(3).max(30).required(),
-		email: Joi.string().email().required(),
-		phone: Joi.string()
-			.pattern(/^\([0-9]{3}\) [0-9]{3}-[0-9]{4}$/)
-			.required(),
-	});
+  const createContactRules = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    phone: Joi.string().required(),
+  });
 
-	const validatedContact = createContactRules.validate(req.body);
+  const validatedContact = createContactRules.validate(req.body);
 
-	if (validatedContact.error) {
-		return res.status(400).send({ message: 'missing required name field' });
-	}
+  if (validatedContact.error) {
+    return res.status(400).send({ message: "missing required name field" });
+  }
 
-	next();
+  next();
 }
 
 //The middleware validate contact credential (update)
 function validateUpdateContact(req, res, next) {
-	const updateContactRules = Joi.object({
-		name: Joi.string().min(3).max(30),
-		email: Joi.string().email(),
-		phone: Joi.string().pattern(/^\([0-9]{3}\) [0-9]{3}-[0-9]{4}$/),
-	});
+  const updateContactRules = Joi.object({
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+  });
 
-	const validatedContact = updateContactRules.validate(req.body);
+  const validatedContact = updateContactRules.validate(req.body);
 
-	if (validatedContact.error) {
-		return res.status(400).send({ message: 'missing fields' });
-	}
+  if (validatedContact.error) {
+    return res.status(400).send({ message: "missing fields" });
+  }
 
-	next();
+  next();
 }
 
 module.exports = { validateCreateContact, validateUpdateContact };

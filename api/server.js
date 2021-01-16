@@ -5,14 +5,13 @@ const morgan = require("morgan");
 const cors = require("cors");
 //Routes
 const contactRouter = require("./contacts/contacts.router");
-//Handle logs
-const accessLogStream = require("./accessLogStream");
+// //Handle logs
 
 class ContactsServer {
   //Initial server
   constructor() {
     this.server = null;
-    this.port = 2000;
+    this.port = 3000;
   }
 
   //Start server
@@ -31,8 +30,8 @@ class ContactsServer {
   //Init middleware
   initMiddleware() {
     this.server.use(express.json());
-    this.server.use(morgan("combined", { stream: accessLogStream }));
-    this.server.use(cors({ origin: "http://localhost:3000" }));
+    this.server.use(morgan("combined"));
+    this.server.use(cors({ origin: `http://localhost:${this.port}` }));
   }
 
   //Init routes
