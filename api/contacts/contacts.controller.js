@@ -1,20 +1,12 @@
-//Core
-const path = require("path");
-const fsPromises = require("fs/promises");
-//Utils
-const { v4: uuidv4 } = require("uuid");
-
-//Data path
-const contactsPath = path.join(__dirname, "../../db/contacts.json");
+//Model
+const contactModel = require("./contacts.model");
 
 //Read: return contacts list
 async function listContacts(req, res, next) {
   try {
-    const data = await fsPromises.readFile(contactsPath, "utf-8");
+    const contacts = await contactModel.find();
 
-    const parsedData = JSON.parse(data);
-
-    return res.status(200).send(parsedData);
+    return res.status(200).json(contacts);
   } catch (error) {
     next(error);
   }
@@ -23,14 +15,12 @@ async function listContacts(req, res, next) {
 //Read: return contact by id
 async function getContactById(req, res, next) {
   try {
-    const data = await fsPromises.readFile(contactsPath, "utf-8");
-
     const { contactId } = req.params;
-    const existContact = JSON.parse(data).find(({ id }) => id === contactId);
+    const contact = await contactModel.findOne({ _id: contactId });
 
-    existContact
-      ? res.status(200).send(existContact)
-      : res.status(404).send({ message: "Not found" });
+    !contact
+      ? res.status(404).json({ message: "Not found" })
+      : res.status(200).json(contact);
   } catch (error) {
     next(error);
   }
@@ -39,15 +29,9 @@ async function getContactById(req, res, next) {
 //Create: receive contact data and return created contact with id
 async function addContact(req, res, next) {
   try {
-    const data = await fsPromises.readFile(contactsPath, "utf-8");
+    const createdContact = await contactModel.create(req.body);
 
-    const newContact = { id: uuidv4(), ...req.body };
-    const parsedData = JSON.parse(data).concat(newContact);
-    const stringifyParsedData = JSON.stringify(parsedData, null, 2);
-
-    await fsPromises.writeFile(contactsPath, stringifyParsedData, "utf-8");
-
-    return res.status(201).send(newContact);
+    return res.status(201).json(createdContact);
   } catch (error) {
     next(error);
   }
@@ -56,22 +40,12 @@ async function addContact(req, res, next) {
 //Delete: remove contact by id
 async function removeContact(req, res, next) {
   try {
-    const data = await fsPromises.readFile(contactsPath, "utf-8");
-
     const { contactId } = req.params;
-    const parsedData = JSON.parse(data);
-    const existContact = parsedData.find(({ id }) => id === contactId);
+    const removedContact = await contactModel.findByIdAndDelete(contactId);
 
-    if (!existContact) {
-      return res.status(404).send({ message: "Not found" });
-    }
-
-    const updatedData = parsedData.filter(({ id }) => id !== contactId);
-    const stringifyParsedData = JSON.stringify(updatedData, null, 2);
-
-    await fsPromises.writeFile(contactsPath, stringifyParsedData, "utf-8");
-
-    return res.status(200).send({ message: "contact deleted" });
+    !removedContact
+      ? res.status(404).json({ message: "Not found" })
+      : res.status(200).json({ message: "contact deleted" });
   } catch (error) {
     next(error);
   }
@@ -80,26 +54,16 @@ async function removeContact(req, res, next) {
 //Update: update contact information by id
 async function updateContact(req, res, next) {
   try {
-    const data = await fsPromises.readFile(contactsPath, "utf-8");
-
     const { contactId } = req.params;
-    const parsedData = JSON.parse(data);
-    const existContactIdx = parsedData.findIndex(({ id }) => id === contactId);
-
-    if (existContactIdx === -1) {
-      return res.status(404).send({ message: "Not found" });
-    }
-
-    const updatedData = parsedData.map((contact) =>
-      contact.id === contactId ? { ...contact, ...req.body } : contact
+    const updatedContact = await contactModel.findByIdAndUpdate(
+      contactId,
+      { $set: req.body },
+      { new: true }
     );
-    const stringifyParsedData = JSON.stringify(updatedData, null, 2);
 
-    await fsPromises.writeFile(contactsPath, stringifyParsedData, "utf-8");
-
-    const updatedContact = updatedData[existContactIdx];
-
-    return res.status(200).send(updatedContact);
+    !updatedContact
+      ? res.status(404).json({ message: "Not found" })
+      : res.status(200).json(updatedContact);
   } catch (error) {
     next(error);
   }
