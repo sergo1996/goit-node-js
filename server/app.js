@@ -5,9 +5,13 @@ const mongoose = require('mongoose');
 //Middleware
 const cors = require('cors');
 require('dotenv').config();
+const fileStorage = require('../middleware/fileStorage');
 //Routes
-const contactRouter = require('./contacts/contact.router');
-const userRouter = require('./users/user.router');
+const authRouter = require('../api/auth/auth.router');
+const userRouter = require('../api/users/user.router');
+const contactRouter = require('../api/contacts/contact.router');
+//Utils
+const accessLogStream = require('../utils/accessLogStream');
 
 class ContactsServer {
 	//Initial server
@@ -22,7 +26,7 @@ class ContactsServer {
 		this.initMiddleware();
 		this.initRoutes();
 		await this.initDatabase();
-		this.startListening();
+		return this.startListening();
 	}
 
 	//Server init
@@ -32,16 +36,18 @@ class ContactsServer {
 
 	//Middleware init
 	initMiddleware() {
+		this.server.use(express.static('public'));
+		this.server.use(fileStorage.single('avatar'));
 		this.server.use(express.json());
-		this.server.use(morgan('combined'));
+		this.server.use(morgan('combined', { stream: accessLogStream }));
 		this.server.use(cors({ origin: 'http://localhost:3000' }));
 	}
 
 	//Routes init
 	initRoutes() {
-		this.server.use('/api/auth', userRouter);
-		this.server.use('/api/contacts', contactRouter);
+		this.server.use('/api/auth', authRouter);
 		this.server.use('/api/users', userRouter);
+		this.server.use('/api/contacts', contactRouter);
 	}
 
 	//MongoDB init
@@ -62,7 +68,7 @@ class ContactsServer {
 
 	//Start listening on port 3001
 	startListening() {
-		this.server.listen(this.port, () => {
+		return this.server.listen(this.port, () => {
 			console.log('Server started listening on port', this.port);
 		});
 	}

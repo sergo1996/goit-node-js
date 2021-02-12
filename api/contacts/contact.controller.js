@@ -1,12 +1,19 @@
 //Model
 const contactModel = require('./contact.model');
+//Utils
+const prettyResponse = require('../../utils/prettyResponse');
 
 //Read: return contacts list
 async function listContacts(req, res, next) {
 	try {
-		const contacts = await contactModel.find();
+		const { page, limit, sub } = req.query;
 
-		return res.status(200).json(contacts);
+		const query = sub ? { subscription: sub } : {};
+
+		const results = await contactModel.paginate(query, { page, limit });
+		const response = prettyResponse(results);
+
+		return res.status(200).json(response);
 	} catch (error) {
 		next(error);
 	}
