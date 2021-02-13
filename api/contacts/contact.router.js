@@ -2,8 +2,8 @@
 const { Router } = require('express');
 //Controller
 const contactsController = require('./contact.controller');
-//Middleware
-const contactsMiddleware = require('./contact.middleware');
+//Helpers
+const validators = require('../../helpers/validators');
 
 const {
 	listContacts,
@@ -14,11 +14,11 @@ const {
 } = contactsController;
 
 const {
+	validateId,
+	validateQueryParams,
 	validateCreateContact,
 	validateUpdateContact,
-	validateContactID,
-	validateQueryParams,
-} = contactsMiddleware;
+} = validators;
 
 //Init router
 const contactRouter = Router();
@@ -27,15 +27,15 @@ const contactRouter = Router();
 contactRouter.get('/', validateQueryParams, listContacts);
 
 // @ GET /api/contacts/:contactId
-contactRouter.get('/:contactId', validateContactID, getContactById);
+contactRouter.get('/:contactId', validateId, getContactById);
 
 // @ POST /api/contacts
 contactRouter.post('/', validateCreateContact, addContact);
 
 // @ DELETE /api/contacts/:id
-contactRouter.delete('/:id', validateContactID, removeContact);
+contactRouter.delete('/:id', validateId, removeContact);
 
 // @ PATCH /api/contacts/:id
-contactRouter.patch('/:id', validateContactID, validateUpdateContact, updateContact);
+contactRouter.patch('/:id', validateId, validateUpdateContact, updateContact);
 
 module.exports = contactRouter;
